@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-TW" x-data="app()" x-init="init()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國姓鄉時空探險隊 v2 - UDL 互動學習教材</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Comic+Neue:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0D9488',
+                        secondary: '#2DD4BF',
+                        cta: '#EA580C',
+                        background: '#F0FDFA',
+                        textMain: '#134E4A',
+                    },
+                    fontFamily: {
+                        heading: ['Baloo 2', 'cursive'],
+                        body: ['Comic Neue', 'cursive'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Claymorphism 樣式 */
+        .clay-card {
+            background: white;
+            border-radius: 24px;
+            border: 3px solid #134E4A;
+            box-shadow: 6px 6px 0px #134E4A, inset 0 -4px 0px rgba(0,0,0,0.1);
+            transition: all 0.2s ease-out;
+        }
+
+        .clay-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 8px 8px 0px #134E4A, inset 0 -4px 0px rgba(0,0,0,0.1);
+        }
+
+        .clay-card.no-hover:hover {
+            transform: none;
+            box-shadow: 6px 6px 0px #134E4A, inset 0 -4px 0px rgba(0,0,0,0.1);
+        }
+
+        .clay-button {
+            border-radius: 16px;
+            border: 3px solid currentColor;
+            box-shadow: 4px 4px 0px currentColor, inset 0 -3px 0px rgba(0,0,0,0.15);
+            transition: all 0.15s ease-out;
+            cursor: pointer;
+        }
+
+        .clay-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0px currentColor, inset 0 -3px 0px rgba(0,0,0,0.15);
+        }
+
+        .clay-button:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0px currentColor, inset 0 -3px 0px rgba(0,0,0,0.15);
+        }
+
+        .clay-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 選項按鈕 */
+        .option-button {
+            background: white;
+            border: 3px solid #134E4A;
+            border-radius: 16px;
+            box-shadow: 4px 4px 0px #134E4A;
+            transition: all 0.15s ease-out;
+            cursor: pointer;
+        }
+
+        .option-button:hover {
+            background: #F0FDFA;
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0px #134E4A;
+        }
+
+        .option-button.correct {
+            background: #DCFCE7;
+            border-color: #22C55E;
+            box-shadow: 4px 4px 0px #22C55E;
+        }
+
+        .option-button.wrong {
+            background: #FEF2F2;
+            border-color: #EF4444;
+            box-shadow: 4px 4px 0px #EF4444;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .celebrate { animation: celebrate 0.5s ease-out; }
+
+        /* 進度條 */
+        .progress-bar {
+            background: #E2E8F0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #0D9488, #2DD4BF);
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.5s ease-out;
+        }
+
+        /* 投影片指示點 */
+        .slide-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #CBD5E1;
+            transition: all 0.3s ease;
+        }
+
+        .slide-dot.active {
+            background: #0D9488;
+            transform: scale(1.3);
+        }
+
+        .slide-dot.completed {
+            background: #22C55E;
+        }
+
+        /* YouTube 嵌入 */
+        .youtube-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        .youtube-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 音檔播放器 */
+        .audio-player {
+            width: 100%;
+            height: 50px;
+        }
+
+        /* 字體大小 */
+        .font-size-small { font-size: 0.875rem; }
+        .font-size-medium { font-size: 1rem; }
+        .font-size-large { font-size: 1.25rem; }
+
+        /* 無障礙 */
+        *:focus-visible {
+            outline: 4px solid #2DD4BF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* 語音按鈕動畫 */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .listening {
+            animation: pulse 1s ease-in-out infinite;
+            background: #EF4444 !important;
+        }
+
+        /* 載入動畫 */
+        .loading-spinner {
+            border: 4px solid #E2E8F0;
+            border-top: 4px solid #0D9488;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen font-body text-textMain" :class="'font-size-' + settings.fontSize">
+
+    <!-- 載入中 -->
+    <div x-show="isLoading" class="fixed inset-0 bg-background flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-xl font-heading">載入中...</p>
+        </div>
+    </div>
+
+    <!-- 主要內容區域 -->
+    <main class="min-h-screen pb-8" x-show="!isLoading">
+
+        <!-- ===== 首頁：單元選擇 ===== -->
+        <template x-if="currentPage === 'home'">
+            <div class="px-4 py-6 max-w-4xl mx-auto">
+                <!-- 標題列 -->
+                <header class="flex items-center justify-between mb-6">
+                    <button @click="showSettings = true" class="clay-button bg-white text-primary p-3" aria-label="設定">
+                        <i data-lucide="settings" class="w-6 h-6"></i>
+                    </button>
+
+                    <div class="text-center">
+                        <h1 class="font-heading text-2xl md:text-3xl font-bold text-primary" x-text="appConfig.title || '國姓鄉時空探險隊'"></h1>
+                        <p class="text-sm text-gray-500" x-text="appConfig.subtitle || ''"></p>
+                    </div>
+
+                    <button @click="showBadges = true" class="clay-button bg-white text-cta p-3" aria-label="我的徽章">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </button>
+                </header>
+
+                <!-- 語音開關 -->
+                <div class="flex justify-center mb-4">
+                    <button
+                        @click="settings.voiceEnabled = !settings.voiceEnabled; saveSettings()"
+                        class="clay-button px-6 py-3 flex items-center gap-3 text-lg"
+                        :class="settings.voiceEnabled ? 'bg-secondary text-white' : 'bg-gray-200 text-gray-500'"
+                    >
+                        <i :data-lucide="settings.voiceEnabled ? 'volume-2' : 'volume-x'" class="w-6 h-6"></i>
+                        <span x-text="settings.voiceEnabled ? '語音已開啟' : '語音已關閉'"></span>
+                    </button>
+                </div>
+
+                <!-- 歡迎訊息 -->
+                <div class="clay-card no-hover p-4 mb-6 text-center" x-show="settings.studentName">
+                    <p class="text-xl">
+                        <span class="text-2xl">👋</span>
+                        你好，<span class="font-bold text-primary" x-text="settings.studentName"></span>！
+                        準備好探險了嗎？
+                    </p>
+                </div>
+
+                <!-- 難度選擇 -->
+                <div class="flex justify-center gap-2 mb-6">
+                    <template x-for="level in ['basic', 'intermediate', 'challenge']" :key="level">
+                        <button
+                            @click="settings.difficulty = level; saveSettings()"
+                            class="clay-button px-4 py-2 text-lg transition-all"
+                            :class="settings.difficulty === level ? 'bg-primary text-white' : 'bg-white text-textMain'"
+                        >
+                            <span x-text="difficultyLabels[level]"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- 單元卡片網格 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <template x-for="unit in units" :key="unit.id">
+                        <button
+                            @click="selectUnit(unit)"
+                            class="clay-card p-4 text-center cursor-pointer focus:outline-none"
+                        >
+                            <div class="text-5xl mb-2" x-text="unit.icon"></div>
+                            <h2 class="font-heading font-bold text-lg mb-1" x-text="unit.title"></h2>
+                            <p class="text-sm text-gray-500 mb-2" x-text="unit.description"></p>
+
+                            <!-- 完成狀態 -->
+                            <div x-show="isUnitCompleted(unit.id)" class="text-green-600 font-bold text-sm">
+                                <i data-lucide="check-circle" class="w-4 h-4 inline"></i> 完成！
+                            </div>
+                            <div x-show="getUnitProgress(unit.id) > 0 && !isUnitCompleted(unit.id)" class="text-cta text-sm">
+                                進行中
+                            </div>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- 總進度條 -->
+                <div class="clay-card no-hover p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-heading font-bold">總進度</span>
+                        <span class="font-bold text-primary" x-text="getOverallProgress() + '/' + units.length + ' 單元完成'"></span>
+                    </div>
+                    <div class="progress-bar h-4">
+                        <div class="progress-fill" :style="'width: ' + (units.length ? getOverallProgress() / units.length * 100 : 0) + '%'"></div>
+                    </div>
+                </div>
+
+                <!-- 管理員入口 -->
+                <div class="text-center mt-6">
+                    <a href="admin.html" class="text-gray-400 hover:text-primary text-sm">
+                        <i data-lucide="settings-2" class="w-4 h-4 inline"></i> 管理後台
+                    </a>
+                </div>
+            </div>
+        </template>
+
+        <!-- ===== 投影片頁面 ===== -->
+        <template x-if="currentPage === 'slides'">
+            <div class="px-4 py-6 max-w-3xl mx-auto">
+                <!-- 導航列 -->
+                <header class="flex items-center justify-between mb-6">
+                    <button @click="currentPage = 'home'" class="clay-button bg-white text-primary px-4 py-2 flex items-center gap-2">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i> 返回
+                    </button>
+
+                    <div class="text-center">
+                        <span class="font-heading font-bold" x-text="currentUnit.title"></span>
+                        <span class="text-gray-500 ml-2" x-text="'(' + (currentSlideIndex + 1) + '/' + currentUnit.slides.length + ')'"></span>
+                    </div>
+
+                    <button @click="speakText((currentSlide?.title || '') + '。' + (currentSlide?.content || ''))" class="clay-button bg-secondary text-white p-3" aria-label="朗讀">
+                        <i data-lucide="volume-2" class="w-5 h-5"></i>
+                    </button>
+                </header>
+
+                <!-- 投影片內容 -->
+                <div class="clay-card no-hover overflow-hidden mb-6">
+                    <template x-if="currentSlide">
+                        <div>
+                            <!-- 投影片標題 -->
+                            <div class="bg-primary text-white p-4">
+                                <h2 class="font-heading text-xl font-bold" x-text="currentSlide.title || ''"></h2>
+                            </div>
+
+                            <!-- 內容區域 -->
+                            <div class="p-6">
+                                <!-- 文字類型 -->
+                                <template x-if="currentSlide.type === 'text'">
+                                    <div class="text-xl leading-relaxed whitespace-pre-line" x-text="currentSlide.content"></div>
+                                </template>
+
+                                <!-- 圖片類型 -->
+                                <template x-if="currentSlide.type === 'image'">
+                                    <div>
+                                        <img :src="currentSlide.url" :alt="currentSlide.title || '教材圖片'" class="w-full rounded-xl mb-4 max-h-64 object-contain bg-gray-100">
+                                        <p class="text-xl leading-relaxed whitespace-pre-line" x-text="currentSlide.content"></p>
+                                    </div>
+                                </template>
+
+                                <!-- YouTube 類型 -->
+                                <template x-if="currentSlide.type === 'youtube'">
+                                    <div>
+                                        <div class="youtube-container mb-4">
+                                            <iframe :src="getYouTubeEmbedUrl(currentSlide.url)" allowfullscreen></iframe>
+                                        </div>
+                                        <p class="text-xl leading-relaxed whitespace-pre-line" x-text="currentSlide.content"></p>
+                                    </div>
+                                </template>
+
+                                <!-- 音檔類型 -->
+                                <template x-if="currentSlide.type === 'audio'">
+                                    <div>
+                                        <div class="bg-gray-100 rounded-xl p-6 mb-4 text-center">
+                                            <i data-lucide="music" class="w-16 h-16 mx-auto mb-4 text-primary"></i>
+                                            <audio :src="currentSlide.url" controls class="audio-player mx-auto"></audio>
+                                        </div>
+                                        <p class="text-xl leading-relaxed whitespace-pre-line" x-text="currentSlide.content"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- 進度指示點 -->
+                <div class="flex justify-center gap-2 mb-6">
+                    <template x-for="(slide, index) in currentUnit.slides" :key="index">
+                        <button
+                            @click="goToSlide(index)"
+                            class="slide-dot"
+                            :class="{
+                                'active': index === currentSlideIndex,
+                                'completed': index < currentSlideIndex
+                            }"
+                            :aria-label="'第 ' + (index + 1) + ' 頁'"
+                        ></button>
+                    </template>
+                </div>
+
+                <!-- 導航按鈕 -->
+                <div class="flex justify-between items-center">
+                    <button
+                        @click="prevSlide()"
+                        :disabled="currentSlideIndex === 0"
+                        class="clay-button bg-white text-primary px-6 py-3 flex items-center gap-2"
+                    >
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i> 上一頁
+                    </button>
+
+                    <!-- 最後一頁顯示「開始測驗」 -->
+                    <template x-if="currentSlideIndex === currentUnit.slides.length - 1">
+                        <button @click="startQuiz()" class="clay-button bg-cta text-white px-6 py-3 flex items-center gap-2">
+                            開始測驗 <i data-lucide="play" class="w-5 h-5"></i>
+                        </button>
+                    </template>
+
+                    <template x-if="currentSlideIndex < currentUnit.slides.length - 1">
+                        <button @click="nextSlide()" class="clay-button bg-primary text-white px-6 py-3 flex items-center gap-2">
+                            下一頁 <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- ===== 答題頁面 ===== -->
+        <template x-if="currentPage === 'quiz'">
+            <div class="px-4 py-6 max-w-2xl mx-auto">
+                <!-- 導航列 -->
+                <header class="flex items-center justify-between mb-6">
+                    <button @click="currentPage = 'slides'" class="clay-button bg-white text-primary px-4 py-2 flex items-center gap-2">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i> 返回教材
+                    </button>
+
+                    <div class="text-center">
+                        <span class="font-heading font-bold" x-text="currentUnit.title"></span>
+                        <span class="text-gray-500 ml-2" x-text="'第 ' + (currentQuestionIndex + 1) + ' 題'"></span>
+                    </div>
+
+                    <div class="clay-button bg-primary text-white px-3 py-2 text-sm">
+                        <span x-text="difficultyLabels[settings.difficulty]"></span>
+                    </div>
+                </header>
+
+                <!-- 題目卡片 -->
+                <div class="clay-card no-hover p-6 mb-6">
+                    <button @click="speakText(currentQuestion.question)" class="clay-button bg-secondary text-white px-4 py-2 mb-4 flex items-center gap-2">
+                        <i data-lucide="volume-2" class="w-5 h-5"></i> 再聽一次
+                    </button>
+                    <p class="text-2xl md:text-3xl font-bold leading-relaxed" x-text="currentQuestion.question"></p>
+                </div>
+
+                <!-- 選項區 -->
+                <div class="space-y-4 mb-6" x-show="!showResult">
+                    <template x-for="(option, index) in currentQuestion.options" :key="index">
+                        <button
+                            @click="checkAnswer(index)"
+                            class="option-button w-full p-5 text-left flex items-center gap-4"
+                            :class="{
+                                'correct': selectedAnswer === index && isCorrect,
+                                'wrong': selectedAnswer === index && !isCorrect && selectedAnswer !== null
+                            }"
+                            :disabled="selectedAnswer !== null"
+                        >
+                            <span class="clay-button bg-primary text-white w-12 h-12 flex items-center justify-center text-xl font-bold shrink-0">
+                                <span x-text="index + 1"></span>
+                            </span>
+                            <span class="text-xl md:text-2xl" x-text="option"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- 語音作答 -->
+                <button
+                    @click="startVoiceRecognition()"
+                    class="clay-button w-full py-4 flex items-center justify-center gap-3 mb-4"
+                    :class="isListening ? 'listening text-white' : 'bg-cta text-white'"
+                    x-show="!showResult"
+                >
+                    <i data-lucide="mic" class="w-6 h-6"></i>
+                    <span x-text="isListening ? '正在聆聽...' : '說出答案'"></span>
+                </button>
+
+                <p class="text-center text-gray-500 mb-4" x-show="!showResult">
+                    <i data-lucide="keyboard" class="w-4 h-4 inline"></i>
+                    提示：按數字鍵 1、2、3 也可以作答
+                </p>
+
+                <!-- 答題結果 -->
+                <div x-show="showResult" class="text-center">
+                    <div x-show="isCorrect" class="celebrate">
+                        <div class="text-8xl mb-4">🎉</div>
+                        <h2 class="font-heading text-3xl font-bold text-green-600 mb-4">太棒了！</h2>
+                        <div class="clay-card no-hover p-4 mb-6 bg-green-50">
+                            <p class="text-lg" x-text="currentQuestion.explanation"></p>
+                        </div>
+                    </div>
+
+                    <div x-show="!isCorrect">
+                        <div class="text-6xl mb-4">🤔</div>
+                        <h2 class="font-heading text-2xl font-bold text-cta mb-4">再想一下喔！</h2>
+                        <button @click="resetQuestion()" class="clay-button bg-cta text-white px-6 py-3 text-xl">
+                            再試一次
+                        </button>
+                    </div>
+
+                    <button x-show="isCorrect" @click="nextQuestion()" class="clay-button bg-primary text-white px-8 py-4 text-xl">
+                        <span x-text="currentQuestionIndex < currentQuestions.length - 1 ? '下一題' : '完成測驗'"></span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 inline ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ===== 完成頁面 ===== -->
+        <template x-if="currentPage === 'complete'">
+            <div class="px-4 py-6 max-w-2xl mx-auto text-center">
+                <div class="clay-card no-hover p-8">
+                    <div class="text-8xl mb-4">🏆</div>
+                    <h1 class="font-heading text-3xl font-bold text-primary mb-4">恭喜完成！</h1>
+                    <p class="text-xl mb-2">你完成了「<span x-text="currentUnit.title"></span>」的學習！</p>
+                    <p class="text-lg text-gray-500 mb-6">獲得徽章：<span class="text-4xl" x-text="currentUnit.icon"></span></p>
+
+                    <button @click="currentPage = 'home'" class="clay-button bg-primary text-white px-8 py-4 text-xl">
+                        返回首頁 <i data-lucide="home" class="w-5 h-5 inline ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+    </main>
+
+    <!-- ===== 設定彈窗 ===== -->
+    <div x-show="showSettings" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click.self="showSettings = false">
+        <div class="clay-card no-hover p-6 w-full max-w-md bg-white" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-heading text-2xl font-bold">設定</h2>
+                <button @click="showSettings = false" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <label class="block font-bold mb-2">你的名字</label>
+                <input type="text" x-model="settings.studentName" @change="saveSettings()" class="w-full p-3 border-3 border-primary rounded-xl text-xl" placeholder="輸入你的名字">
+            </div>
+
+            <div class="mb-6">
+                <label class="block font-bold mb-2">難度</label>
+                <div class="flex gap-2">
+                    <template x-for="level in ['basic', 'intermediate', 'challenge']" :key="level">
+                        <button @click="settings.difficulty = level; saveSettings()" class="clay-button flex-1 py-2 text-sm" :class="settings.difficulty === level ? 'bg-primary text-white' : 'bg-white text-textMain'">
+                            <span x-text="difficultyLabels[level]"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block font-bold mb-2">字體大小</label>
+                <div class="flex gap-2">
+                    <template x-for="size in ['small', 'medium', 'large']" :key="size">
+                        <button @click="settings.fontSize = size; saveSettings()" class="clay-button flex-1 py-2" :class="settings.fontSize === size ? 'bg-primary text-white' : 'bg-white text-textMain'">
+                            <span x-text="fontSizeLabels[size]"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block font-bold mb-2">自動語音朗讀</label>
+                <button
+                    @click="settings.voiceEnabled = !settings.voiceEnabled; saveSettings()"
+                    class="clay-button w-full py-3 flex items-center justify-center gap-2"
+                    :class="settings.voiceEnabled ? 'bg-secondary text-white' : 'bg-gray-200 text-gray-500'"
+                >
+                    <i :data-lucide="settings.voiceEnabled ? 'volume-2' : 'volume-x'" class="w-5 h-5"></i>
+                    <span x-text="settings.voiceEnabled ? '已開啟' : '已關閉'"></span>
+                </button>
+            </div>
+
+            <button @click="if(confirm('確定要重置所有進度嗎？')) resetProgress()" class="clay-button w-full bg-red-500 text-white py-3">
+                重置進度
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== 徽章彈窗 ===== -->
+    <div x-show="showBadges" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click.self="showBadges = false">
+        <div class="clay-card no-hover p-6 w-full max-w-md bg-white" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-heading text-2xl font-bold">我的徽章</h2>
+                <button @click="showBadges = false" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4">
+                <template x-for="unit in units" :key="unit.id">
+                    <div class="text-center">
+                        <div class="text-4xl mb-1" :class="isUnitCompleted(unit.id) ? '' : 'grayscale opacity-30'">
+                            <span x-text="unit.icon"></span>
+                        </div>
+                        <p class="text-xs" x-text="unit.title"></p>
+                    </div>
+                </template>
+            </div>
+
+            <div class="mt-6 text-center" x-show="getOverallProgress() === units.length && units.length > 0">
+                <div class="text-6xl mb-2">🏆</div>
+                <h3 class="font-heading text-xl font-bold text-cta">國姓探險王！</h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 資料來源設定
+        const DATA_BASE_URL = './data';  // 可改為 GitHub raw URL
+
+        function app() {
+            return {
+                // 狀態
+                isLoading: true,
+                currentPage: 'home',
+                showSettings: false,
+                showBadges: false,
+
+                // 資料
+                appConfig: {},
+                units: [],
+                currentUnit: null,
+                currentSlideIndex: 0,
+                currentQuestionIndex: 0,
+                currentQuestions: [],
+
+                // 答題狀態
+                selectedAnswer: null,
+                isCorrect: false,
+                showResult: false,
+                isListening: false,
+
+                // 設定
+                settings: {
+                    studentName: '',
+                    difficulty: 'basic',
+                    fontSize: 'medium',
+                    voiceEnabled: true,  // 語音開關
+                },
+
+                // 進度
+                progress: {},
+
+                // 標籤
+                difficultyLabels: {
+                    basic: '⭐ 基礎',
+                    intermediate: '⭐⭐ 進階',
+                    challenge: '⭐⭐⭐ 挑戰'
+                },
+                fontSizeLabels: { small: '小', medium: '中', large: '大' },
+
+                // 計算屬性
+                get currentSlide() {
+                    return this.currentUnit?.slides?.[this.currentSlideIndex] || null;
+                },
+
+                get currentQuestion() {
+                    return this.currentQuestions?.[this.currentQuestionIndex] || {};
+                },
+
+                // 初始化
+                async init() {
+                    this.loadSettings();
+                    this.loadProgress();
+                    await this.loadData();
+                    this.isLoading = false;
+
+                    this.$nextTick(() => lucide.createIcons());
+
+                    // 鍵盤監聽
+                    document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+                },
+
+                // 載入資料
+                async loadData() {
+                    try {
+                        // 嘗試從外部載入
+                        const indexRes = await fetch(`${DATA_BASE_URL}/index.json`);
+                        if (indexRes.ok) {
+                            const data = await indexRes.json();
+                            this.appConfig = data;
+                            this.units = data.units || [];
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('無法載入外部資料，使用內建資料');
+                    }
+
+                    // 使用內建備用資料
+                    this.loadFallbackData();
+                },
+
+                loadFallbackData() {
+                    this.appConfig = {
+                        title: '國姓鄉時空探險隊',
+                        subtitle: 'UDL 互動學習教材'
+                    };
+                    this.units = [
+                        { id: 'bridge', title: '北港溪糯米橋', icon: '🌉', description: '全台灣僅存三座的糯米橋之一' },
+                        { id: '921', title: '九份二山傾斜屋', icon: '🏚️', description: '因921大地震而傾斜的房屋' },
+                        { id: 'deer', title: '國姓水鹿場', icon: '🦌', description: '台灣水鹿的故鄉' },
+                        { id: 'success', title: '搶成功', icon: '⛵', description: '國姓鄉最熱鬧的傳統比賽' },
+                        { id: 'coffee', title: '國姓咖啡', icon: '☕', description: '高山上的黑金產業' },
+                        { id: 'temple', title: '禪機山仙佛寺', icon: '🏯', description: '日式禪風的美麗寺廟' },
+                        { id: 'canal', title: '能高大圳', icon: '🌊', description: '灌溉農田的生命之水' },
+                        { id: 'loquat', title: '國姓枇杷', icon: '🍊', description: '春天的黃金水果' }
+                    ];
+                },
+
+                // 選擇單元
+                async selectUnit(unit) {
+                    this.isLoading = true;
+
+                    try {
+                        const res = await fetch(`${DATA_BASE_URL}/units/${unit.id}.json`);
+                        if (res.ok) {
+                            this.currentUnit = await res.json();
+                        } else {
+                            throw new Error('無法載入');
+                        }
+                    } catch (e) {
+                        // 使用內建備用資料
+                        this.currentUnit = this.getFallbackUnit(unit.id);
+                    }
+
+                    this.currentSlideIndex = 0;
+                    this.isLoading = false;
+                    this.currentPage = 'slides';
+
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                        setTimeout(() => this.speakCurrentSlide(), 500);
+                    });
+                },
+
+                getFallbackUnit(id) {
+                    // 返回基本結構
+                    const unit = this.units.find(u => u.id === id);
+                    return {
+                        id: id,
+                        title: unit?.title || '未知單元',
+                        icon: unit?.icon || '📚',
+                        description: unit?.description || '',
+                        slides: [
+                            { type: 'text', title: '教材載入中', content: '請確認網路連線或將教材上傳至 GitHub。\n\n目前使用的是示範模式。' }
+                        ],
+                        questions: {
+                            basic: [{ question: '這是示範題目', options: ['選項A', '選項B'], answer: 0, explanation: '這是示範說明' }],
+                            intermediate: [{ question: '這是示範題目', options: ['選項A', '選項B', '選項C'], answer: 0, explanation: '這是示範說明' }],
+                            challenge: [{ question: '這是示範題目', options: ['選項A', '選項B', '選項C'], answer: 0, explanation: '這是示範說明' }]
+                        }
+                    };
+                },
+
+                // 投影片導航
+                nextSlide() {
+                    if (this.currentSlideIndex < this.currentUnit.slides.length - 1) {
+                        this.currentSlideIndex++;
+                        this.$nextTick(() => {
+                            lucide.createIcons();
+                            this.speakCurrentSlide();
+                        });
+                    }
+                },
+
+                prevSlide() {
+                    if (this.currentSlideIndex > 0) {
+                        this.currentSlideIndex--;
+                        this.$nextTick(() => {
+                            lucide.createIcons();
+                            this.speakCurrentSlide();
+                        });
+                    }
+                },
+
+                goToSlide(index) {
+                    this.currentSlideIndex = index;
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                        this.speakCurrentSlide();
+                    });
+                },
+
+                speakCurrentSlide() {
+                    if (this.currentSlide) {
+                        const text = (this.currentSlide.title || '') + '。' + (this.currentSlide.content || '');
+                        this.autoSpeak(text);  // 使用 autoSpeak，尊重語音開關
+                    }
+                },
+
+                // YouTube 嵌入
+                getYouTubeEmbedUrl(url) {
+                    if (!url) return '';
+                    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+                    return match ? `https://www.youtube.com/embed/${match[1]}` : '';
+                },
+
+                // 開始測驗
+                startQuiz() {
+                    const difficulty = this.settings.difficulty;
+                    this.currentQuestions = this.currentUnit.questions?.[difficulty] || [];
+                    this.currentQuestionIndex = 0;
+                    this.resetQuestion();
+                    this.currentPage = 'quiz';
+
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                        setTimeout(() => this.autoSpeak(this.currentQuestion.question), 500);
+                    });
+                },
+
+                // 答題邏輯
+                checkAnswer(index) {
+                    if (this.selectedAnswer !== null) return;
+                    this.selectedAnswer = index;
+                    this.isCorrect = index === this.currentQuestion.answer;
+
+                    if (this.isCorrect) {
+                        setTimeout(() => this.autoSpeak('太棒了！答對了！'), 300);
+                    } else {
+                        setTimeout(() => this.autoSpeak('再想一下喔！'), 300);
+                    }
+
+                    setTimeout(() => {
+                        this.showResult = true;
+                        this.$nextTick(() => lucide.createIcons());
+                    }, 500);
+                },
+
+                resetQuestion() {
+                    this.selectedAnswer = null;
+                    this.isCorrect = false;
+                    this.showResult = false;
+                    setTimeout(() => this.autoSpeak(this.currentQuestion.question), 300);
+                },
+
+                nextQuestion() {
+                    if (this.currentQuestionIndex < this.currentQuestions.length - 1) {
+                        this.currentQuestionIndex++;
+                        this.resetQuestion();
+                        this.$nextTick(() => lucide.createIcons());
+                    } else {
+                        // 完成測驗
+                        this.markUnitCompleted();
+                        this.currentPage = 'complete';
+                        this.$nextTick(() => lucide.createIcons());
+                    }
+                },
+
+                // 進度管理
+                markUnitCompleted() {
+                    if (!this.progress[this.currentUnit.id]) {
+                        this.progress[this.currentUnit.id] = {};
+                    }
+                    this.progress[this.currentUnit.id].completed = true;
+                    this.saveProgress();
+                },
+
+                isUnitCompleted(unitId) {
+                    return this.progress[unitId]?.completed === true;
+                },
+
+                getUnitProgress(unitId) {
+                    return this.progress[unitId]?.completed ? 1 : 0;
+                },
+
+                getOverallProgress() {
+                    return this.units.filter(u => this.isUnitCompleted(u.id)).length;
+                },
+
+                // 設定管理
+                loadSettings() {
+                    const saved = localStorage.getItem('guoxing_v2_settings');
+                    if (saved) this.settings = { ...this.settings, ...JSON.parse(saved) };
+                },
+
+                saveSettings() {
+                    localStorage.setItem('guoxing_v2_settings', JSON.stringify(this.settings));
+                },
+
+                loadProgress() {
+                    const saved = localStorage.getItem('guoxing_v2_progress');
+                    if (saved) this.progress = JSON.parse(saved);
+                },
+
+                saveProgress() {
+                    localStorage.setItem('guoxing_v2_progress', JSON.stringify(this.progress));
+                },
+
+                resetProgress() {
+                    this.progress = {};
+                    this.saveProgress();
+                    this.showSettings = false;
+                },
+
+                // 鍵盤處理
+                handleKeyPress(e) {
+                    if (this.currentPage === 'quiz' && !this.showResult) {
+                        if (e.key === '1') this.checkAnswer(0);
+                        if (e.key === '2') this.checkAnswer(1);
+                        if (e.key === '3' && this.currentQuestion.options?.length > 2) this.checkAnswer(2);
+                    }
+                    if (this.currentPage === 'slides') {
+                        if (e.key === 'ArrowRight') this.nextSlide();
+                        if (e.key === 'ArrowLeft') this.prevSlide();
+                    }
+                },
+
+                // 語音功能
+                speakText(text) {
+                    // 手動觸發：永遠播放
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.lang = 'zh-TW';
+                        utterance.rate = 0.8;
+                        utterance.pitch = 1.1;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                },
+
+                autoSpeak(text) {
+                    // 自動觸發：檢查語音開關
+                    if (this.settings.voiceEnabled) {
+                        this.speakText(text);
+                    }
+                },
+
+                startVoiceRecognition() {
+                    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                        alert('您的瀏覽器不支援語音辨識功能');
+                        return;
+                    }
+
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'zh-TW';
+                    recognition.interimResults = false;
+
+                    this.isListening = true;
+
+                    recognition.onresult = (event) => {
+                        const result = event.results[0][0].transcript.toLowerCase();
+                        this.isListening = false;
+
+                        if (result.includes('一') || result.includes('1')) this.checkAnswer(0);
+                        else if (result.includes('二') || result.includes('2')) this.checkAnswer(1);
+                        else if (result.includes('三') || result.includes('3') && this.currentQuestion.options?.length > 2) this.checkAnswer(2);
+                        else {
+                            for (let i = 0; i < this.currentQuestion.options.length; i++) {
+                                if (result.includes(this.currentQuestion.options[i].toLowerCase())) {
+                                    this.checkAnswer(i);
+                                    return;
+                                }
+                            }
+                            this.speakText('我沒有聽清楚，請再說一次');
+                        }
+                    };
+
+                    recognition.onerror = () => {
+                        this.isListening = false;
+                        this.speakText('語音辨識失敗，請再試一次');
+                    };
+
+                    recognition.onend = () => { this.isListening = false; };
+                    recognition.start();
+
+                    setTimeout(() => {
+                        if (this.isListening) {
+                            recognition.stop();
+                            this.isListening = false;
+                        }
+                    }, 5000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="zh-TW" x-data="app()" x-init="init()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國姓鄉時空探險隊 - UDL 互動學習教材</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Comic+Neue:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0D9488',
+                        secondary: '#2DD4BF',
+                        cta: '#EA580C',
+                        background: '#F0FDFA',
+                        textMain: '#134E4A',
+                        chinese: '#EC4899',
+                        math: '#3B82F6',
+                        social: '#F97316',
+                        science: '#22C55E',
+                    },
+                    fontFamily: {
+                        heading: ['Baloo 2', 'cursive'],
+                        body: ['Comic Neue', 'cursive'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Claymorphism 樣式 */
+        .clay-card {
+            background: white;
+            border-radius: 24px;
+            border: 3px solid #134E4A;
+            box-shadow:
+                6px 6px 0px #134E4A,
+                inset 0 -4px 0px rgba(0,0,0,0.1);
+            transition: all 0.2s ease-out;
+        }
+
+        .clay-card:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                8px 8px 0px #134E4A,
+                inset 0 -4px 0px rgba(0,0,0,0.1);
+        }
+
+        .clay-card:active {
+            transform: translateY(2px);
+            box-shadow:
+                2px 2px 0px #134E4A,
+                inset 0 -4px 0px rgba(0,0,0,0.1);
+        }
+
+        .clay-button {
+            border-radius: 16px;
+            border: 3px solid currentColor;
+            box-shadow:
+                4px 4px 0px currentColor,
+                inset 0 -3px 0px rgba(0,0,0,0.15);
+            transition: all 0.15s ease-out;
+            cursor: pointer;
+        }
+
+        .clay-button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                6px 6px 0px currentColor,
+                inset 0 -3px 0px rgba(0,0,0,0.15);
+        }
+
+        .clay-button:active {
+            transform: translateY(2px);
+            box-shadow:
+                2px 2px 0px currentColor,
+                inset 0 -3px 0px rgba(0,0,0,0.15);
+        }
+
+        /* 選項按鈕樣式 */
+        .option-button {
+            background: white;
+            border: 3px solid #134E4A;
+            border-radius: 16px;
+            box-shadow: 4px 4px 0px #134E4A;
+            transition: all 0.15s ease-out;
+            cursor: pointer;
+        }
+
+        .option-button:hover {
+            background: #F0FDFA;
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0px #134E4A;
+        }
+
+        .option-button:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0px #134E4A;
+        }
+
+        .option-button.correct {
+            background: #DCFCE7;
+            border-color: #22C55E;
+            box-shadow: 4px 4px 0px #22C55E;
+        }
+
+        .option-button.wrong {
+            background: #FEF2F2;
+            border-color: #EF4444;
+            box-shadow: 4px 4px 0px #EF4444;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* 慶祝動畫 */
+        @keyframes celebrate {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .celebrate {
+            animation: celebrate 0.5s ease-out;
+        }
+
+        /* 進度條 */
+        .progress-bar {
+            background: #E2E8F0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #0D9488, #2DD4BF);
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.5s ease-out;
+        }
+
+        /* 字體大小設定 */
+        .font-size-small { font-size: 0.875rem; }
+        .font-size-medium { font-size: 1rem; }
+        .font-size-large { font-size: 1.25rem; }
+
+        /* 無障礙焦點樣式 */
+        *:focus-visible {
+            outline: 4px solid #2DD4BF;
+            outline-offset: 2px;
+        }
+
+        /* 減少動畫偏好 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* 學科卡片顏色 */
+        .subject-chinese {
+            background: linear-gradient(135deg, #FDF2F8, #FCE7F3);
+            border-color: #EC4899;
+        }
+        .subject-math {
+            background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+            border-color: #3B82F6;
+        }
+        .subject-social {
+            background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+            border-color: #F97316;
+        }
+        .subject-science {
+            background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+            border-color: #22C55E;
+        }
+
+        /* 語音按鈕動畫 */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .listening {
+            animation: pulse 1s ease-in-out infinite;
+            background: #EF4444 !important;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen font-body text-textMain" :class="'font-size-' + settings.fontSize">
+
+    <!-- 主要內容區域 -->
+    <main class="min-h-screen pb-8">
+
+        <!-- ===== 首頁：地點選擇 ===== -->
+        <template x-if="currentPage === 'home'">
+            <div class="px-4 py-6 max-w-4xl mx-auto">
+                <!-- 標題列 -->
+                <header class="flex items-center justify-between mb-6">
+                    <button
+                        @click="showSettings = true"
+                        class="clay-button bg-white text-primary p-3"
+                        aria-label="設定"
+                    >
+                        <i data-lucide="settings" class="w-6 h-6"></i>
+                    </button>
+
+                    <h1 class="font-heading text-2xl md:text-3xl font-bold text-primary text-center">
+                        國姓鄉時空探險隊
+                    </h1>
+
+                    <button
+                        @click="showBadges = true"
+                        class="clay-button bg-white text-cta p-3"
+                        aria-label="我的徽章"
+                    >
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </button>
+                </header>
+
+                <!-- 歡迎訊息 -->
+                <div class="clay-card p-4 mb-6 text-center" x-show="settings.studentName">
+                    <p class="text-xl">
+                        <span class="text-2xl">👋</span>
+                        你好，<span class="font-bold text-primary" x-text="settings.studentName"></span>！
+                        準備好探險了嗎？
+                    </p>
+                </div>
+
+                <!-- 難度選擇 -->
+                <div class="flex justify-center gap-2 mb-6">
+                    <template x-for="level in ['basic', 'intermediate', 'challenge']" :key="level">
+                        <button
+                            @click="settings.difficulty = level; saveSettings()"
+                            class="clay-button px-4 py-2 text-lg transition-all"
+                            :class="settings.difficulty === level ? 'bg-primary text-white' : 'bg-white text-textMain'"
+                        >
+                            <span x-text="difficultyLabels[level]"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- 地點卡片網格 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <template x-for="location in locations" :key="location.id">
+                        <button
+                            @click="selectLocation(location)"
+                            class="clay-card p-4 text-center cursor-pointer focus:outline-none"
+                            :aria-label="location.name"
+                        >
+                            <!-- 地點圖示 -->
+                            <div class="text-5xl mb-2" x-text="location.icon"></div>
+
+                            <!-- 地點名稱 -->
+                            <h2 class="font-heading font-bold text-lg mb-2" x-text="location.name"></h2>
+
+                            <!-- 完成狀態 -->
+                            <div x-show="isLocationCompleted(location.id)" class="text-science font-bold">
+                                <i data-lucide="check-circle" class="w-5 h-5 inline"></i>
+                                完成！
+                            </div>
+                            <div x-show="getLocationProgress(location.id) > 0 && !isLocationCompleted(location.id)" class="text-cta">
+                                進行中
+                            </div>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- 總進度條 -->
+                <div class="clay-card p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-heading font-bold">總進度</span>
+                        <span class="font-bold text-primary" x-text="getOverallProgress() + '/' + locations.length + ' 地點完成'"></span>
+                    </div>
+                    <div class="progress-bar h-4">
+                        <div class="progress-fill" :style="'width: ' + (getOverallProgress() / locations.length * 100) + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ===== 地點詳情頁 ===== -->
+        <template x-if="currentPage === 'location'">
+            <div class="px-4 py-6 max-w-2xl mx-auto">
+                <!-- 導航列 -->
+                <header class="flex items-center justify-between mb-6">
+                    <button
+                        @click="currentPage = 'home'"
+                        class="clay-button bg-white text-primary px-4 py-2 flex items-center gap-2"
+                    >
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        返回地圖
+                    </button>
+
+                    <div class="clay-button bg-primary text-white px-4 py-2">
+                        <span x-text="difficultyLabels[settings.difficulty]"></span>
+                    </div>
+                </header>
+
+                <!-- 地點資訊卡片 -->
+                <div class="clay-card overflow-hidden mb-6">
+                    <!-- 圖片區域 -->
+                    <div class="h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                        <span class="text-8xl" x-text="selectedLocation.icon"></span>
+                    </div>
+
+                    <!-- 文字資訊 -->
+                    <div class="p-6">
+                        <h1 class="font-heading text-2xl font-bold mb-2" x-text="selectedLocation.name"></h1>
+                        <p class="text-lg mb-4" x-text="selectedLocation.description"></p>
+
+                        <button
+                            @click="speakText(selectedLocation.description)"
+                            class="clay-button bg-secondary text-white px-4 py-2 flex items-center gap-2"
+                        >
+                            <i data-lucide="volume-2" class="w-5 h-5"></i>
+                            聽介紹
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 學科選擇 -->
+                <h2 class="font-heading text-xl font-bold mb-4 text-center">選擇學科開始學習</h2>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <template x-for="subject in subjects" :key="subject.id">
+                        <button
+                            @click="selectSubject(subject)"
+                            class="clay-card p-6 text-center cursor-pointer"
+                            :class="'subject-' + subject.id"
+                        >
+                            <div class="text-4xl mb-2" x-text="subject.icon"></div>
+                            <h3 class="font-heading font-bold text-xl mb-2" x-text="subject.name"></h3>
+
+                            <!-- 完成狀態 -->
+                            <div x-show="isSubjectCompleted(selectedLocation.id, subject.id)" class="text-science font-bold text-sm">
+                                <i data-lucide="check" class="w-4 h-4 inline"></i> 已完成
+                            </div>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- ===== 答題頁 ===== -->
+        <template x-if="currentPage === 'quiz'">
+            <div class="px-4 py-6 max-w-2xl mx-auto">
+                <!-- 導航列 -->
+                <header class="flex items-center justify-between mb-6">
+                    <button
+                        @click="currentPage = 'location'"
+                        class="clay-button bg-white text-primary px-4 py-2 flex items-center gap-2"
+                    >
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        返回
+                    </button>
+
+                    <div class="text-center">
+                        <span class="font-heading font-bold" x-text="selectedLocation.name"></span>
+                        <span class="mx-2">-</span>
+                        <span :class="'text-' + selectedSubject.id" x-text="selectedSubject.name"></span>
+                    </div>
+
+                    <div class="clay-button bg-primary text-white px-3 py-2 text-sm">
+                        <span x-text="difficultyLabels[settings.difficulty]"></span>
+                    </div>
+                </header>
+
+                <!-- 題目卡片 -->
+                <div class="clay-card p-6 mb-6">
+                    <!-- 朗讀按鈕 -->
+                    <button
+                        @click="speakText(currentQuestion.question)"
+                        class="clay-button bg-secondary text-white px-4 py-2 mb-4 flex items-center gap-2"
+                    >
+                        <i data-lucide="volume-2" class="w-5 h-5"></i>
+                        再聽一次
+                    </button>
+
+                    <!-- 題目文字 -->
+                    <p class="text-2xl md:text-3xl font-bold leading-relaxed" x-text="currentQuestion.question"></p>
+                </div>
+
+                <!-- 選項區 -->
+                <div class="space-y-4 mb-6" x-show="!showResult">
+                    <template x-for="(option, index) in currentQuestion.options" :key="index">
+                        <button
+                            @click="checkAnswer(index)"
+                            class="option-button w-full p-5 text-left flex items-center gap-4"
+                            :class="{
+                                'correct': selectedAnswer === index && isCorrect,
+                                'wrong': selectedAnswer === index && !isCorrect && selectedAnswer !== null
+                            }"
+                            :disabled="selectedAnswer !== null"
+                        >
+                            <span class="clay-button bg-primary text-white w-12 h-12 flex items-center justify-center text-xl font-bold shrink-0">
+                                <span x-text="index + 1"></span>
+                            </span>
+                            <span class="text-xl md:text-2xl" x-text="option"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- 語音作答按鈕 -->
+                <button
+                    @click="startVoiceRecognition()"
+                    class="clay-button w-full py-4 flex items-center justify-center gap-3 mb-4"
+                    :class="isListening ? 'listening text-white' : 'bg-cta text-white'"
+                    x-show="!showResult"
+                >
+                    <i data-lucide="mic" class="w-6 h-6"></i>
+                    <span x-text="isListening ? '正在聆聽...' : '說出答案'"></span>
+                </button>
+
+                <!-- 提示文字 -->
+                <p class="text-center text-gray-500 mb-4" x-show="!showResult">
+                    <i data-lucide="keyboard" class="w-4 h-4 inline"></i>
+                    提示：按數字鍵 1、2、3 也可以作答
+                </p>
+
+                <!-- 答題結果 -->
+                <div x-show="showResult" class="text-center">
+                    <!-- 正確 -->
+                    <div x-show="isCorrect" class="celebrate">
+                        <div class="text-8xl mb-4">🎉</div>
+                        <h2 class="font-heading text-3xl font-bold text-science mb-4">太棒了！</h2>
+                        <div class="clay-card p-4 mb-6 bg-green-50">
+                            <p class="text-lg" x-text="currentQuestion.explanation"></p>
+                        </div>
+                    </div>
+
+                    <!-- 錯誤 -->
+                    <div x-show="!isCorrect">
+                        <div class="text-6xl mb-4">🤔</div>
+                        <h2 class="font-heading text-2xl font-bold text-cta mb-4">再想一下喔！</h2>
+                        <button
+                            @click="resetQuestion()"
+                            class="clay-button bg-cta text-white px-6 py-3 text-xl"
+                        >
+                            再試一次
+                        </button>
+                    </div>
+
+                    <!-- 繼續按鈕（正確時） -->
+                    <button
+                        x-show="isCorrect"
+                        @click="nextQuestion()"
+                        class="clay-button bg-primary text-white px-8 py-4 text-xl"
+                    >
+                        繼續探險
+                        <i data-lucide="arrow-right" class="w-5 h-5 inline ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+    </main>
+
+    <!-- ===== 設定彈窗 ===== -->
+    <div
+        x-show="showSettings"
+        x-transition
+        class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+        @click.self="showSettings = false"
+    >
+        <div class="clay-card p-6 w-full max-w-md bg-white" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-heading text-2xl font-bold">設定</h2>
+                <button @click="showSettings = false" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- 學生姓名 -->
+            <div class="mb-6">
+                <label class="block font-bold mb-2">你的名字</label>
+                <input
+                    type="text"
+                    x-model="settings.studentName"
+                    @change="saveSettings()"
+                    class="w-full p-3 border-3 border-primary rounded-xl text-xl"
+                    placeholder="輸入你的名字"
+                >
+            </div>
+
+            <!-- 難度選擇 -->
+            <div class="mb-6">
+                <label class="block font-bold mb-2">難度</label>
+                <div class="flex gap-2">
+                    <template x-for="level in ['basic', 'intermediate', 'challenge']" :key="level">
+                        <button
+                            @click="settings.difficulty = level; saveSettings()"
+                            class="clay-button flex-1 py-2 text-sm"
+                            :class="settings.difficulty === level ? 'bg-primary text-white' : 'bg-white text-textMain'"
+                        >
+                            <span x-text="difficultyLabels[level]"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 字體大小 -->
+            <div class="mb-6">
+                <label class="block font-bold mb-2">字體大小</label>
+                <div class="flex gap-2">
+                    <template x-for="size in ['small', 'medium', 'large']" :key="size">
+                        <button
+                            @click="settings.fontSize = size; saveSettings()"
+                            class="clay-button flex-1 py-2"
+                            :class="settings.fontSize === size ? 'bg-primary text-white' : 'bg-white text-textMain'"
+                        >
+                            <span x-text="fontSizeLabels[size]"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 重置進度 -->
+            <button
+                @click="if(confirm('確定要重置所有進度嗎？')) resetProgress()"
+                class="clay-button w-full bg-red-500 text-white py-3"
+            >
+                重置進度
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== 徽章彈窗 ===== -->
+    <div
+        x-show="showBadges"
+        x-transition
+        class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+        @click.self="showBadges = false"
+    >
+        <div class="clay-card p-6 w-full max-w-md bg-white" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-heading text-2xl font-bold">我的徽章</h2>
+                <button @click="showBadges = false" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4">
+                <template x-for="location in locations" :key="location.id">
+                    <div class="text-center">
+                        <div
+                            class="text-4xl mb-1"
+                            :class="isLocationCompleted(location.id) ? '' : 'grayscale opacity-30'"
+                        >
+                            <span x-text="location.icon"></span>
+                        </div>
+                        <p class="text-xs" x-text="location.name"></p>
+                    </div>
+                </template>
+            </div>
+
+            <!-- 全部完成獎勵 -->
+            <div class="mt-6 text-center" x-show="getOverallProgress() === locations.length">
+                <div class="text-6xl mb-2">🏆</div>
+                <h3 class="font-heading text-xl font-bold text-cta">國姓探險王！</h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function app() {
+            return {
+                // 頁面狀態
+                currentPage: 'home',
+                showSettings: false,
+                showBadges: false,
+
+                // 選擇狀態
+                selectedLocation: null,
+                selectedSubject: null,
+                currentQuestion: null,
+                selectedAnswer: null,
+                isCorrect: false,
+                showResult: false,
+                isListening: false,
+
+                // 設定
+                settings: {
+                    studentName: '',
+                    difficulty: 'basic',
+                    fontSize: 'medium',
+                },
+
+                // 進度
+                progress: {},
+
+                // 標籤對照
+                difficultyLabels: {
+                    basic: '⭐ 基礎',
+                    intermediate: '⭐⭐ 進階',
+                    challenge: '⭐⭐⭐ 挑戰'
+                },
+
+                fontSizeLabels: {
+                    small: '小',
+                    medium: '中',
+                    large: '大'
+                },
+
+                // 學科資料
+                subjects: [
+                    { id: 'chinese', name: '國語', icon: '📖' },
+                    { id: 'math', name: '數學', icon: '🔢' },
+                    { id: 'social', name: '社會', icon: '🌍' },
+                    { id: 'science', name: '自然', icon: '🔬' },
+                ],
+
+                // 地點資料
+                locations: [
+                    {
+                        id: 'bridge',
+                        name: '北港溪糯米橋',
+                        icon: '🌉',
+                        description: '全台灣僅存三座的糯米橋之一，是用石頭、糯米、紅糖黏起來的喔！',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '這座橋是用石頭和什麼東西黏起來的？',
+                                    options: ['強力膠', '糯米紅糖'],
+                                    answer: 1,
+                                    explanation: '以前沒有水泥，聰明的先人用糯米混合紅糖來黏石頭喔！'
+                                },
+                                intermediate: {
+                                    question: '這座橋是用石頭和什麼東西黏起來的？',
+                                    options: ['強力膠', '糯米紅糖', '口香糖'],
+                                    answer: 1,
+                                    explanation: '以前沒有水泥，聰明的先人用糯米混合紅糖來黏石頭喔！'
+                                },
+                                challenge: {
+                                    question: '糯米橋使用糯米和紅糖作為黏合劑，這種古老的建築方式叫做什麼？',
+                                    options: ['水泥工法', '糯米灰漿工法', '現代工法'],
+                                    answer: 1,
+                                    explanation: '糯米灰漿工法是古代中國人發明的建築技術，比現代水泥還要堅固！'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '數數看，橋下面有幾個大洞？',
+                                    options: ['2 個', '4 個'],
+                                    answer: 1,
+                                    explanation: '糯米橋有 4 個漂亮的拱門喔！'
+                                },
+                                intermediate: {
+                                    question: '數數看，這座橋下面有幾個半圓形的洞（橋拱）？',
+                                    options: ['2 個', '3 個', '4 個'],
+                                    answer: 2,
+                                    explanation: '答對了！糯米橋有 4 個漂亮的拱門。'
+                                },
+                                challenge: {
+                                    question: '如果每個橋拱寬度是 3 公尺，4 個橋拱的總寬度是多少公尺？',
+                                    options: ['7 公尺', '12 公尺', '15 公尺'],
+                                    answer: 1,
+                                    explanation: '3 × 4 = 12 公尺！用乘法可以更快算出來喔。'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '我們應該怎麼對待古蹟？',
+                                    options: ['用力敲打', '好好愛護'],
+                                    answer: 1,
+                                    explanation: '古蹟是老祖先留下來的寶貝，我們要好好愛護！'
+                                },
+                                intermediate: {
+                                    question: '這座橋是幾級古蹟，我們應該怎麼保護它？',
+                                    options: ['在上面亂畫畫', '用力敲打它', '用眼睛欣賞，愛護它'],
+                                    answer: 2,
+                                    explanation: '沒錯，它是三級古蹟，我們要好好愛護。'
+                                },
+                                challenge: {
+                                    question: '糯米橋建於什麼時期？',
+                                    options: ['清朝時期', '日治時期', '民國時期'],
+                                    answer: 1,
+                                    explanation: '糯米橋建於日治時期（1940年），已經超過80年歷史了！'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '糯米橋是用什麼材料蓋的？',
+                                    options: ['大石頭', '塑膠'],
+                                    answer: 0,
+                                    explanation: '石頭很重很堅固，所以橋可以屹立不搖！'
+                                },
+                                intermediate: {
+                                    question: '糯米橋是用什麼材料蓋成的，所以不怕大水沖？',
+                                    options: ['大石頭', '木頭', '塑膠'],
+                                    answer: 0,
+                                    explanation: '石頭很重很堅固，所以可以屹立不搖。'
+                                },
+                                challenge: {
+                                    question: '糯米橋的拱形設計有什麼優點？',
+                                    options: ['比較好看', '可以分散重量更堅固', '比較好爬'],
+                                    answer: 1,
+                                    explanation: '拱形結構可以把重量分散到兩邊，讓橋更堅固！這是古人的智慧。'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        id: '921',
+                        name: '九份二山傾斜屋',
+                        icon: '🏚️',
+                        description: '因為 921 大地震，房子歪掉了，進去會覺得頭暈暈的喔！',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '走進傾斜屋會有什麼感覺？',
+                                    options: ['頭暈暈的', '想睡覺'],
+                                    answer: 0,
+                                    explanation: '因為眼睛看到的和身體感覺的不一樣，所以會頭暈！'
+                                },
+                                intermediate: {
+                                    question: '走進傾斜屋的時候，身體會有什麼感覺？',
+                                    options: ['頭暈暈的', '肚子餓餓的', '想睡覺'],
+                                    answer: 0,
+                                    explanation: '因為視覺跟平衡感打架了，所以會覺得頭暈暈的。'
+                                },
+                                challenge: {
+                                    question: '「傾斜」這個詞是什麼意思？',
+                                    options: ['直直的', '歪歪斜斜的', '圓圓的'],
+                                    answer: 1,
+                                    explanation: '傾斜就是歪歪斜斜、不是直的意思。'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '傾斜屋的地板是平的還是斜的？',
+                                    options: ['平平的', '斜斜的'],
+                                    answer: 1,
+                                    explanation: '地板是斜斜的，所以走路要小心喔！'
+                                },
+                                intermediate: {
+                                    question: '傾斜屋的地板是平的還是斜的？',
+                                    options: ['平平的 (0度)', '斜斜的 (有角度)', '直直的 (90度)'],
+                                    answer: 1,
+                                    explanation: '地板是斜斜的，所以走路要小心喔！'
+                                },
+                                challenge: {
+                                    question: '如果傾斜屋傾斜了 15 度，它偏離水平面多少度？',
+                                    options: ['0 度', '15 度', '90 度'],
+                                    answer: 1,
+                                    explanation: '傾斜 15 度就是偏離水平面 15 度喔！'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '九份二山的房子為什麼會歪掉？',
+                                    options: ['地震', '颱風'],
+                                    answer: 0,
+                                    explanation: '是因為 921 大地震讓房子歪掉的！'
+                                },
+                                intermediate: {
+                                    question: '九份二山是因為哪一個大地震才改變樣子的？',
+                                    options: ['921大地震', '颱風', '火災'],
+                                    answer: 0,
+                                    explanation: '1999年的921大地震，改變了這裡的地形。'
+                                },
+                                challenge: {
+                                    question: '921 大地震發生在哪一年？',
+                                    options: ['1989年', '1999年', '2009年'],
+                                    answer: 1,
+                                    explanation: '921 大地震發生在 1999 年 9 月 21 日凌晨。'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '把水倒在斜的地板上，水會往哪裡流？',
+                                    options: ['往低的地方', '往高的地方'],
+                                    answer: 0,
+                                    explanation: '水會受地心引力影響，往低處流！'
+                                },
+                                intermediate: {
+                                    question: '在傾斜屋把水倒在地上，水會怎麼流？',
+                                    options: ['往低的地方流', '往高的地方流', '停在原地'],
+                                    answer: 0,
+                                    explanation: '雖然看起來怪怪的，但水還是會受地心引力影響往低處流喔。'
+                                },
+                                challenge: {
+                                    question: '地震是因為什麼原因造成的？',
+                                    options: ['風太大', '地殼板塊移動', '下雨'],
+                                    answer: 1,
+                                    explanation: '地震是因為地球內部的板塊互相推擠、移動造成的。'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        id: 'deer',
+                        name: '國姓水鹿場',
+                        icon: '🦌',
+                        description: '國姓是水鹿的家鄉，這裡有好多可愛的鹿喔！',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '國姓鄉最有名的動物是什麼？',
+                                    options: ['水鹿', '企鵝'],
+                                    answer: 0,
+                                    explanation: '國姓鄉是「水鹿之鄉」，有很多可愛的鹿！'
+                                },
+                                intermediate: {
+                                    question: '國姓鄉是全台灣第一名的什麼產地？',
+                                    options: ['鹿茸', '獅子', '企鵝'],
+                                    answer: 0,
+                                    explanation: '國姓鄉是「水鹿之鄉」，鹿茸產量第一名！'
+                                },
+                                challenge: {
+                                    question: '「鹿茸」是指鹿的哪個部位？',
+                                    options: ['鹿的尾巴', '鹿的角（還沒硬化的）', '鹿的腳'],
+                                    answer: 1,
+                                    explanation: '鹿茸是鹿角還沒硬化之前的樣子，是很珍貴的中藥材。'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '一隻鹿有幾條腿？',
+                                    options: ['2 條', '4 條'],
+                                    answer: 1,
+                                    explanation: '鹿有 4 條腿！'
+                                },
+                                intermediate: {
+                                    question: '一隻水鹿有 4 條腿，2 隻水鹿共有幾條腿？',
+                                    options: ['4 條', '6 條', '8 條'],
+                                    answer: 2,
+                                    explanation: '4 + 4 = 8，或者是 4 × 2 = 8 條腿喔。'
+                                },
+                                challenge: {
+                                    question: '鹿場裡有 5 隻鹿，每隻鹿一天吃 3 公斤的草，5 隻鹿一天共吃多少公斤的草？',
+                                    options: ['8 公斤', '15 公斤', '20 公斤'],
+                                    answer: 1,
+                                    explanation: '5 × 3 = 15 公斤！'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '國姓鄉每年會舉辦什麼熱鬧的活動？',
+                                    options: ['鹿神祭', '游泳比賽'],
+                                    answer: 0,
+                                    explanation: '鹿神祭是國姓鄉的大活動，非常熱鬧！'
+                                },
+                                intermediate: {
+                                    question: '國姓鄉每年都會舉辦什麼熱鬧的活動來慶祝？',
+                                    options: ['搶成功 (鹿神祭)', '賽車比賽', '游泳比賽'],
+                                    answer: 0,
+                                    explanation: '是「搶成功」和「鹿神祭」，非常熱鬧喔！'
+                                },
+                                challenge: {
+                                    question: '養鹿產業對國姓鄉有什麼重要性？',
+                                    options: ['只是好玩', '是重要的經濟收入來源', '沒有什麼重要'],
+                                    answer: 1,
+                                    explanation: '養鹿是國姓鄉很重要的產業，鹿茸可以賣錢，幫助農民生活。'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '水鹿喜歡吃什麼？',
+                                    options: ['草和樹葉', '漢堡'],
+                                    answer: 0,
+                                    explanation: '水鹿是草食動物，最愛吃草和樹葉！'
+                                },
+                                intermediate: {
+                                    question: '水鹿是吃什麼長大的？',
+                                    options: ['牧草和樹葉', '漢堡', '魚'],
+                                    answer: 0,
+                                    explanation: '水鹿是草食性動物，最愛吃新鮮的牧草。'
+                                },
+                                challenge: {
+                                    question: '水鹿的角每年會怎樣？',
+                                    options: ['永遠不會掉', '會掉落再重新長出來', '會越長越小'],
+                                    answer: 1,
+                                    explanation: '公鹿的角每年會脫落，然後重新長出新的角！'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        id: 'success',
+                        name: '搶成功',
+                        icon: '⛵',
+                        description: '國姓鄉最熱鬧的比賽！大家一起推著有輪子的戰船，看誰跑得快！',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '「國姓爺」是誰？',
+                                    options: ['鄭成功', '林旺大象'],
+                                    answer: 0,
+                                    explanation: '國姓爺就是鄭成功，他是很有名的民族英雄！'
+                                },
+                                intermediate: {
+                                    question: '「國姓爺」是指哪一位歷史人物？',
+                                    options: ['鄭成功', '孫中山', '林旺大象'],
+                                    answer: 0,
+                                    explanation: '國姓爺就是鄭成功！他被皇帝賜姓「國姓」，所以叫國姓爺。'
+                                },
+                                challenge: {
+                                    question: '「國姓鄉」的名字跟鄭成功有什麼關係？',
+                                    options: ['沒有關係', '因為鄭成功被稱為國姓爺', '因為這裡很大'],
+                                    answer: 1,
+                                    explanation: '國姓鄉的名字就是為了紀念「國姓爺」鄭成功！'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '如果一艘戰船有 5 個人推，兩艘船有幾個人？',
+                                    options: ['5 人', '10 人'],
+                                    answer: 1,
+                                    explanation: '5 + 5 = 10 人！'
+                                },
+                                intermediate: {
+                                    question: '一艘戰船如果有 9 個人推，兩艘船共有幾個人？',
+                                    options: ['9 人', '18 人', '20 人'],
+                                    answer: 1,
+                                    explanation: '9 + 9 = 18 人，或是 9 × 2 = 18 人！'
+                                },
+                                challenge: {
+                                    question: '搶成功比賽，如果跑道長 100 公尺，來回跑一趟要跑幾公尺？',
+                                    options: ['100 公尺', '200 公尺', '300 公尺'],
+                                    answer: 1,
+                                    explanation: '去程 100 公尺 + 回程 100 公尺 = 200 公尺！'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '搶成功比賽需要大家一起合作嗎？',
+                                    options: ['要', '不要'],
+                                    answer: 0,
+                                    explanation: '搶成功需要團隊合作才能贏！'
+                                },
+                                intermediate: {
+                                    question: '「搶成功」比賽最需要什麼精神才能贏？',
+                                    options: ['吵架', '團結合作', '睡覺'],
+                                    answer: 1,
+                                    explanation: '團結合作才能推得又快又穩！'
+                                },
+                                challenge: {
+                                    question: '搶成功活動代表什麼文化意義？',
+                                    options: ['只是好玩', '紀念鄭成功的開拓精神', '慶祝過年'],
+                                    answer: 1,
+                                    explanation: '搶成功是為了紀念鄭成功開拓台灣的精神！'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '推戰船需要用什麼力？',
+                                    options: ['推力', '浮力'],
+                                    answer: 0,
+                                    explanation: '要用手推戰船，所以是推力！'
+                                },
+                                intermediate: {
+                                    question: '推戰船的時候，我們要施展什麼力？',
+                                    options: ['推力', '浮力', '磁力'],
+                                    answer: 0,
+                                    explanation: '我們用手推東西，產生的力叫做推力！'
+                                },
+                                challenge: {
+                                    question: '在泥土地推戰船會比在水泥地累，這是因為什麼？',
+                                    options: ['泥土比較重', '泥土地的摩擦力比較大', '泥土地比較滑'],
+                                    answer: 1,
+                                    explanation: '泥土地比較粗糙，摩擦力大，所以推起來比較費力！'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        id: 'coffee',
+                        name: '國姓咖啡',
+                        icon: '☕',
+                        description: '這裡的山上種滿了「黑金」，喝起來香香苦苦的，是大人的味道。',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '咖啡喝起來是什麼味道？',
+                                    options: ['苦苦香香的', '辣辣的'],
+                                    answer: 0,
+                                    explanation: '咖啡喝起來苦苦香香的，很多大人喜歡喝！'
+                                },
+                                intermediate: {
+                                    question: '咖啡喝起來的味道，通常我們怎麼形容？',
+                                    options: ['辣辣的', '苦苦香香的', '鹹鹹的'],
+                                    answer: 1,
+                                    explanation: '咖啡的味道苦苦香香的，很特別！'
+                                },
+                                challenge: {
+                                    question: '咖啡被稱為「黑金」是因為什麼？',
+                                    options: ['因為很便宜', '因為很珍貴、價值高', '因為很輕'],
+                                    answer: 1,
+                                    explanation: '好的咖啡價格很高，像黃金一樣珍貴，所以叫黑金！'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '一杯咖啡 50 元，買 2 杯要多少錢？',
+                                    options: ['50 元', '100 元'],
+                                    answer: 1,
+                                    explanation: '50 + 50 = 100 元！'
+                                },
+                                intermediate: {
+                                    question: '一包濾掛咖啡賣 30 元，買 3 包要多少錢？',
+                                    options: ['60 元', '90 元', '100 元'],
+                                    answer: 1,
+                                    explanation: '30 × 3 = 90 元！'
+                                },
+                                challenge: {
+                                    question: '咖啡農一天採收 20 公斤咖啡豆，5 天共採收多少公斤？',
+                                    options: ['25 公斤', '100 公斤', '120 公斤'],
+                                    answer: 1,
+                                    explanation: '20 × 5 = 100 公斤！'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '國姓鄉的咖啡為什麼好喝？',
+                                    options: ['因為山上涼涼的', '因為加了糖'],
+                                    answer: 0,
+                                    explanation: '國姓鄉的山上溫度涼爽，日夜溫差大，咖啡長得特別好！'
+                                },
+                                intermediate: {
+                                    question: '為什麼國姓鄉種出來的咖啡特別好喝？',
+                                    options: ['因為有日夜溫差', '因為加了糖', '因為用海水澆'],
+                                    answer: 0,
+                                    explanation: '國姓鄉的山上日夜溫差大，讓咖啡豆更香醇！'
+                                },
+                                challenge: {
+                                    question: '台灣咖啡產業對農民有什麼幫助？',
+                                    options: ['沒有幫助', '增加收入、發展觀光', '讓農民更累'],
+                                    answer: 1,
+                                    explanation: '咖啡產業可以增加農民收入，還能發展觀光旅遊！'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '咖啡豆烘焙之前是什麼顏色？',
+                                    options: ['紅色或綠色', '黑色'],
+                                    answer: 0,
+                                    explanation: '咖啡豆原本是紅色或綠色，烘焙後才變成黑色！'
+                                },
+                                intermediate: {
+                                    question: '咖啡豆還沒烘焙之前（原本）是什麼顏色的？',
+                                    options: ['紅色或綠色', '黑色', '藍色'],
+                                    answer: 0,
+                                    explanation: '咖啡果實成熟時是紅色的，裡面的豆子是綠色的！'
+                                },
+                                challenge: {
+                                    question: '咖啡樹適合種在什麼環境？',
+                                    options: ['很熱的沙漠', '涼爽的山區', '寒冷的雪地'],
+                                    answer: 1,
+                                    explanation: '咖啡樹喜歡溫暖但不太熱的環境，山區最適合！'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        id: 'temple',
+                        name: '禪機山仙佛寺',
+                        icon: '🏯',
+                        description: '這裡有巨大的黃色燈籠，還有長長的樓梯，風景像畫一樣美麗。',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '參觀寺廟時應該怎麼說話？',
+                                    options: ['輕聲細語', '大吼大叫'],
+                                    answer: 0,
+                                    explanation: '寺廟是安靜的地方，要輕聲細語！'
+                                },
+                                intermediate: {
+                                    question: '這裡的氣氛很安靜，我們講話應該要？',
+                                    options: ['大吼大叫', '輕聲細語', '唱歌跳舞'],
+                                    answer: 1,
+                                    explanation: '寺廟是莊嚴的地方，說話要輕聲細語。'
+                                },
+                                challenge: {
+                                    question: '「禪」這個字是什麼意思？',
+                                    options: ['很吵鬧', '安靜、專心', '很熱鬧'],
+                                    answer: 1,
+                                    explanation: '禪是一種讓心靜下來、專心的修行方式。'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '這裡的大燈籠是什麼形狀？',
+                                    options: ['圓形', '三角形'],
+                                    answer: 0,
+                                    explanation: '大燈籠是圓圓的形狀！'
+                                },
+                                intermediate: {
+                                    question: '這裡掛著很多巨大的燈籠，它們是什麼形狀的？',
+                                    options: ['三角形', '圓形/橢圓形', '正方形'],
+                                    answer: 1,
+                                    explanation: '燈籠是圓形或橢圓形的！'
+                                },
+                                challenge: {
+                                    question: '如果階梯有 88 階，爬上去又爬下來，共爬了幾階？',
+                                    options: ['88 階', '176 階', '264 階'],
+                                    answer: 1,
+                                    explanation: '88 + 88 = 176 階！'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '去寺廟時哪個行為是有禮貌的？',
+                                    options: ['亂丟垃圾', '保持安靜'],
+                                    answer: 1,
+                                    explanation: '保持安靜、愛護環境是有禮貌的表現！'
+                                },
+                                intermediate: {
+                                    question: '進入寺廟參觀時，哪一個行為是有禮貌的？',
+                                    options: ['亂丟垃圾', '保持安靜欣賞', '爬到樹上'],
+                                    answer: 1,
+                                    explanation: '保持安靜、尊重這個地方是最有禮貌的！'
+                                },
+                                challenge: {
+                                    question: '禪機山仙佛寺的建築風格受到哪個國家影響？',
+                                    options: ['美國', '日本', '英國'],
+                                    answer: 1,
+                                    explanation: '仙佛寺的建築有濃厚的日式禪風！'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '松樹的葉子長什麼樣子？',
+                                    options: ['細細像針', '大大像扇子'],
+                                    answer: 0,
+                                    explanation: '松樹的葉子細細長長，像針一樣！'
+                                },
+                                intermediate: {
+                                    question: '這裡種了很多松樹，松樹的葉子長得像什麼？',
+                                    options: ['針一樣細細的', '像扇子大大的', '像愛心'],
+                                    answer: 0,
+                                    explanation: '松樹的葉子是針狀的，所以叫針葉樹！'
+                                },
+                                challenge: {
+                                    question: '為什麼松樹的葉子是針狀的？',
+                                    options: ['比較好看', '可以減少水分流失', '比較好吃'],
+                                    answer: 1,
+                                    explanation: '針狀的葉子表面積小，可以減少水分蒸發！'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        id: 'canal',
+                        name: '能高大圳',
+                        icon: '🌊',
+                        description: '這是一條很長的人工河流，把水從山上帶下來，讓大家有水種田。',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '「大圳」是什麼意思？',
+                                    options: ['大水溝', '大馬路'],
+                                    answer: 0,
+                                    explanation: '大圳就是很大的水溝，可以輸送水！'
+                                },
+                                intermediate: {
+                                    question: '「大圳」的意思是什麼？',
+                                    options: ['大水溝/水利工程', '大馬路', '大火車'],
+                                    answer: 0,
+                                    explanation: '大圳是很大的水道，專門運送水的！'
+                                },
+                                challenge: {
+                                    question: '「灌溉」這個詞是什麼意思？',
+                                    options: ['把水喝掉', '把水引到農田澆灌作物', '把水倒掉'],
+                                    answer: 1,
+                                    explanation: '灌溉就是把水引到農田裡，幫助作物生長！'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '水會往高的地方流還是低的地方流？',
+                                    options: ['低的地方', '高的地方'],
+                                    answer: 0,
+                                    explanation: '水會往低的地方流！'
+                                },
+                                intermediate: {
+                                    question: '如果大圳經過了 3 個村莊，來回走一趟是經過幾個村莊？',
+                                    options: ['3 個', '6 個', '9 個'],
+                                    answer: 1,
+                                    explanation: '去程 3 個 + 回程 3 個 = 6 個村莊！'
+                                },
+                                challenge: {
+                                    question: '能高大圳全長約 15 公里，如果小明一小時走 3 公里，走完全程要幾小時？',
+                                    options: ['3 小時', '5 小時', '15 小時'],
+                                    answer: 1,
+                                    explanation: '15 ÷ 3 = 5 小時！'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '大圳的水是用來做什麼的？',
+                                    options: ['種田灌溉', '養鯊魚'],
+                                    answer: 0,
+                                    explanation: '大圳的水主要是給農田灌溉用的！'
+                                },
+                                intermediate: {
+                                    question: '這條大圳主要的功能是什麼？',
+                                    options: ['游泳比賽', '灌溉農田', '養鯊魚'],
+                                    answer: 1,
+                                    explanation: '大圳的功能是把水送到農田，幫助農民種田！'
+                                },
+                                challenge: {
+                                    question: '水利建設對農業發展有什麼重要性？',
+                                    options: ['沒有重要', '讓農田有穩定的水源', '讓農田變少'],
+                                    answer: 1,
+                                    explanation: '有了大圳，農田就有穩定的水源，作物才能長得好！'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '水在水圳裡往哪裡流？',
+                                    options: ['往低處流', '往高處流'],
+                                    answer: 0,
+                                    explanation: '水受地心引力影響，會往低處流！'
+                                },
+                                intermediate: {
+                                    question: '水在水圳裡流動，通常是往哪裡流？',
+                                    options: ['往低處流', '往天空流', '倒著流'],
+                                    answer: 0,
+                                    explanation: '水會受地心引力影響，往低的地方流！'
+                                },
+                                challenge: {
+                                    question: '古人沒有抽水機，怎麼讓水流到農田？',
+                                    options: ['用手提', '利用地勢高低差讓水自然流', '等下雨'],
+                                    answer: 1,
+                                    explanation: '古人很聰明，利用地勢高低讓水自然流下來！'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        id: 'loquat',
+                        name: '國姓枇杷',
+                        icon: '🍊',
+                        description: '黃澄澄的水果，外型像樂器，吃起來甜甜多汁。',
+                        subjects: {
+                            chinese: {
+                                basic: {
+                                    question: '枇杷長得像什麼樂器？',
+                                    options: ['琵琶', '鋼琴'],
+                                    answer: 0,
+                                    explanation: '枇杷的形狀像琵琶這種樂器！'
+                                },
+                                intermediate: {
+                                    question: '「枇杷」的名字是因為它長得像哪一種樂器？',
+                                    options: ['吉他', '琵琶', '鋼琴'],
+                                    answer: 1,
+                                    explanation: '枇杷的形狀像琵琶這個樂器，所以叫枇杷！'
+                                },
+                                challenge: {
+                                    question: '有一句話「枇杷不是此琵琶」，這句話在說什麼？',
+                                    options: ['枇杷很好吃', '枇杷（水果）和琵琶（樂器）是不同的東西', '枇杷很大顆'],
+                                    answer: 1,
+                                    explanation: '這句話是說：枇杷是水果，琵琶是樂器，同音但不同東西！'
+                                }
+                            },
+                            math: {
+                                basic: {
+                                    question: '小明吃了 2 顆枇杷，小華吃了 3 顆，他們共吃了幾顆？',
+                                    options: ['4 顆', '5 顆'],
+                                    answer: 1,
+                                    explanation: '2 + 3 = 5 顆！'
+                                },
+                                intermediate: {
+                                    question: '小明吃了 2 顆枇杷，小華吃了 3 顆，他們一共吃了幾顆？',
+                                    options: ['4 顆', '5 顆', '6 顆'],
+                                    answer: 1,
+                                    explanation: '2 + 3 = 5 顆！'
+                                },
+                                challenge: {
+                                    question: '一盒枇杷有 6 顆，買 4 盒共有幾顆枇杷？',
+                                    options: ['10 顆', '20 顆', '24 顆'],
+                                    answer: 2,
+                                    explanation: '6 × 4 = 24 顆！'
+                                }
+                            },
+                            social: {
+                                basic: {
+                                    question: '農夫採枇杷要怎麼拿？',
+                                    options: ['輕輕拿', '用力丟'],
+                                    answer: 0,
+                                    explanation: '枇杷很嬌嫩，要輕輕拿才不會弄壞！'
+                                },
+                                intermediate: {
+                                    question: '枇杷是很嬌貴的水果，農夫採收時要怎麼對待它？',
+                                    options: ['輕輕拿', '用力丟', '用腳踢'],
+                                    answer: 0,
+                                    explanation: '枇杷皮很薄，要小心輕拿才不會碰傷！'
+                                },
+                                challenge: {
+                                    question: '國姓鄉的枇杷大約在什麼季節成熟？',
+                                    options: ['夏天（7-8月）', '春天（3-4月）', '冬天（12-1月）'],
+                                    answer: 1,
+                                    explanation: '枇杷是春天的水果，大約 3-4 月成熟！'
+                                }
+                            },
+                            science: {
+                                basic: {
+                                    question: '枇杷的皮摸起來怎麼樣？',
+                                    options: ['毛毛的', '滑滑的'],
+                                    answer: 0,
+                                    explanation: '枇杷的皮有細細的毛，摸起來毛毛的！'
+                                },
+                                intermediate: {
+                                    question: '摸摸看枇杷的果皮，上面有什麼特徵？',
+                                    options: ['滑滑的像蘋果', '毛毛的', '刺刺的像鳳梨'],
+                                    answer: 1,
+                                    explanation: '枇杷的皮上面有細細的絨毛！'
+                                },
+                                challenge: {
+                                    question: '枇杷的葉子可以做什麼用途？',
+                                    options: ['做帽子', '做中藥、止咳', '做衣服'],
+                                    answer: 1,
+                                    explanation: '枇杷葉是中藥材，可以做成止咳的枇杷膏！'
+                                }
+                            }
+                        }
+                    }
+                ],
+
+                // 初始化
+                init() {
+                    this.loadSettings();
+                    this.loadProgress();
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                    });
+
+                    // 鍵盤監聽
+                    document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+                },
+
+                // 鍵盤處理
+                handleKeyPress(e) {
+                    if (this.currentPage === 'quiz' && !this.showResult) {
+                        if (e.key === '1') this.checkAnswer(0);
+                        if (e.key === '2') this.checkAnswer(1);
+                        if (e.key === '3' && this.currentQuestion.options.length > 2) this.checkAnswer(2);
+                    }
+                },
+
+                // 設定相關
+                loadSettings() {
+                    const saved = localStorage.getItem('guoxing_settings');
+                    if (saved) {
+                        this.settings = { ...this.settings, ...JSON.parse(saved) };
+                    }
+                },
+
+                saveSettings() {
+                    localStorage.setItem('guoxing_settings', JSON.stringify(this.settings));
+                },
+
+                // 進度相關
+                loadProgress() {
+                    const saved = localStorage.getItem('guoxing_progress');
+                    if (saved) {
+                        this.progress = JSON.parse(saved);
+                    }
+                },
+
+                saveProgress() {
+                    localStorage.setItem('guoxing_progress', JSON.stringify(this.progress));
+                },
+
+                resetProgress() {
+                    this.progress = {};
+                    this.saveProgress();
+                    this.showSettings = false;
+                },
+
+                // 進度計算
+                isSubjectCompleted(locationId, subjectId) {
+                    return this.progress[locationId]?.[subjectId] === true;
+                },
+
+                isLocationCompleted(locationId) {
+                    const subjects = ['chinese', 'math', 'social', 'science'];
+                    return subjects.every(s => this.isSubjectCompleted(locationId, s));
+                },
+
+                getLocationProgress(locationId) {
+                    const subjects = ['chinese', 'math', 'social', 'science'];
+                    return subjects.filter(s => this.isSubjectCompleted(locationId, s)).length;
+                },
+
+                getOverallProgress() {
+                    return this.locations.filter(loc => this.isLocationCompleted(loc.id)).length;
+                },
+
+                // 頁面導航
+                selectLocation(location) {
+                    this.selectedLocation = location;
+                    this.currentPage = 'location';
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                selectSubject(subject) {
+                    this.selectedSubject = subject;
+                    this.loadQuestion();
+                    this.currentPage = 'quiz';
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                        // 自動朗讀題目
+                        setTimeout(() => this.speakText(this.currentQuestion.question), 500);
+                    });
+                },
+
+                loadQuestion() {
+                    const difficulty = this.settings.difficulty;
+                    this.currentQuestion = this.selectedLocation.subjects[this.selectedSubject.id][difficulty];
+                    this.selectedAnswer = null;
+                    this.isCorrect = false;
+                    this.showResult = false;
+                },
+
+                // 答題邏輯
+                checkAnswer(index) {
+                    if (this.selectedAnswer !== null) return;
+
+                    this.selectedAnswer = index;
+                    this.isCorrect = index === this.currentQuestion.answer;
+
+                    if (this.isCorrect) {
+                        // 記錄進度
+                        if (!this.progress[this.selectedLocation.id]) {
+                            this.progress[this.selectedLocation.id] = {};
+                        }
+                        this.progress[this.selectedLocation.id][this.selectedSubject.id] = true;
+                        this.saveProgress();
+
+                        // 播放成功語音
+                        setTimeout(() => this.speakText('太棒了！答對了！'), 300);
+                    } else {
+                        // 播放提示語音
+                        setTimeout(() => this.speakText('再想一下喔！'), 300);
+                    }
+
+                    setTimeout(() => {
+                        this.showResult = true;
+                        this.$nextTick(() => lucide.createIcons());
+                    }, 500);
+                },
+
+                resetQuestion() {
+                    this.selectedAnswer = null;
+                    this.isCorrect = false;
+                    this.showResult = false;
+                    setTimeout(() => this.speakText(this.currentQuestion.question), 300);
+                },
+
+                nextQuestion() {
+                    // 返回地點頁面
+                    this.currentPage = 'location';
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                // 語音朗讀
+                speakText(text) {
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.lang = 'zh-TW';
+                        utterance.rate = 0.8;
+                        utterance.pitch = 1.1;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                },
+
+                // 語音辨識
+                startVoiceRecognition() {
+                    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                        alert('您的瀏覽器不支援語音辨識功能');
+                        return;
+                    }
+
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'zh-TW';
+                    recognition.interimResults = false;
+
+                    this.isListening = true;
+
+                    recognition.onresult = (event) => {
+                        const result = event.results[0][0].transcript.toLowerCase();
+                        this.isListening = false;
+
+                        // 檢查是否符合任何選項
+                        const options = this.currentQuestion.options;
+
+                        // 檢查數字
+                        if (result.includes('一') || result.includes('1') || result.includes('第一')) {
+                            this.checkAnswer(0);
+                        } else if (result.includes('二') || result.includes('2') || result.includes('第二')) {
+                            this.checkAnswer(1);
+                        } else if (result.includes('三') || result.includes('3') || result.includes('第三')) {
+                            if (options.length > 2) this.checkAnswer(2);
+                        } else {
+                            // 檢查選項內容
+                            for (let i = 0; i < options.length; i++) {
+                                if (result.includes(options[i].toLowerCase()) ||
+                                    options[i].toLowerCase().includes(result)) {
+                                    this.checkAnswer(i);
+                                    return;
+                                }
+                            }
+                            this.speakText('我沒有聽清楚，請再說一次');
+                        }
+                    };
+
+                    recognition.onerror = () => {
+                        this.isListening = false;
+                        this.speakText('語音辨識失敗，請再試一次');
+                    };
+
+                    recognition.onend = () => {
+                        this.isListening = false;
+                    };
+
+                    recognition.start();
+
+                    // 5秒超時
+                    setTimeout(() => {
+                        if (this.isListening) {
+                            recognition.stop();
+                            this.isListening = false;
+                        }
+                    }, 5000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

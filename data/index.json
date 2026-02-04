@@ -1,0 +1,60 @@
+{
+  "title": "國姓鄉時空探險隊",
+  "subtitle": "UDL 互動學習教材",
+  "version": "2.0",
+  "units": [
+    {
+      "id": "bridge",
+      "title": "北港溪糯米橋",
+      "icon": "🌉",
+      "description": "全台灣僅存三座的糯米橋之一"
+    },
+    {
+      "id": "921",
+      "title": "九份二山傾斜屋",
+      "icon": "🏚️",
+      "description": "因921大地震而傾斜的房屋"
+    },
+    {
+      "id": "deer",
+      "title": "國姓水鹿場",
+      "icon": "🦌",
+      "description": "台灣水鹿的故鄉"
+    },
+    {
+      "id": "success",
+      "title": "搶成功",
+      "icon": "⛵",
+      "description": "國姓鄉最熱鬧的傳統比賽"
+    },
+    {
+      "id": "coffee",
+      "title": "國姓咖啡",
+      "icon": "☕",
+      "description": "高山上的黑金產業"
+    },
+    {
+      "id": "temple",
+      "title": "禪機山仙佛寺",
+      "icon": "🏯",
+      "description": "日式禪風的美麗寺廟"
+    },
+    {
+      "id": "canal",
+      "title": "能高大圳",
+      "icon": "🌊",
+      "description": "灌溉農田的生命之水"
+    },
+    {
+      "id": "loquat",
+      "title": "國姓枇杷",
+      "icon": "🍊",
+      "description": "春天的黃金水果"
+    }
+  ],
+  "settings": {
+    "defaultDifficulty": "basic",
+    "enableVoice": true,
+    "enableKeyboard": true
+  }
+}
